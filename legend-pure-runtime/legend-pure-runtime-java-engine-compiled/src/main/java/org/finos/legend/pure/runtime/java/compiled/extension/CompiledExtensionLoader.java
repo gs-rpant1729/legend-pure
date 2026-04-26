@@ -16,6 +16,7 @@ package org.finos.legend.pure.runtime.java.compiled.extension;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.MutableList;
+import org.finos.legend.pure.m3.serialization.runtime.ParserService;
 
 import java.util.ServiceLoader;
 
@@ -23,7 +24,7 @@ public class CompiledExtensionLoader
 {
     public static MutableList<CompiledExtension> extensions()
     {
-        return Lists.mutable.withAll(ServiceLoader.load(CompiledExtension.class));
+        return Lists.mutable.withAll(ServiceLoader.load(CompiledExtension.class, CompiledExtension.class.getClassLoader()));
     }
 
     public static MutableList<CompiledExtension> extensions(ClassLoader classLoader)

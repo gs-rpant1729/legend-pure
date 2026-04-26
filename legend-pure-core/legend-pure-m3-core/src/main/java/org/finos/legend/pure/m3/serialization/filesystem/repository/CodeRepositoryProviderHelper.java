@@ -82,7 +82,25 @@ public class CodeRepositoryProviderHelper
      */
     public static RichIterable<CodeRepository> findCodeRepositories(boolean refresh)
     {
-        return getRepositories(ServiceLoader.load(CodeRepositoryProvider.class), refresh);
+        ClassLoader cl = CodeRepositoryProvider.class.getClassLoader();
+        String svcFile = "META-INF/services/" + CodeRepositoryProvider.class.getName();
+
+        // Check if the services file is visible at all
+        java.util.Enumeration<java.net.URL> resources = null;
+        try
+        {
+            resources = cl.getResources(svcFile);
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        while (resources.hasMoreElements())
+        {
+            System.out.println("Found: " + resources.nextElement());
+        }
+
+        return getRepositories(ServiceLoader.load(CodeRepositoryProvider.class, cl), refresh);
     }
 
     /**

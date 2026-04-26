@@ -1,0 +1,128 @@
+# Legend Pure — Repository Summary
+
+## Overview
+
+**Legend Pure** is the underlying programming language for the [Legend](https://github.com/finos/legend) platform, an open-source data management and governance platform originally developed by **Goldman Sachs** and contributed to **FINOS** (Fintech Open Source Foundation). It is licensed under **Apache 2.0**.
+
+- **Version**: `5.56.1-SNAPSHOT`
+- **Build**: Maven 3.6+ multi-module project, targeting **Java 8** bytecode (requires **JDK 11 or 17** to compile)
+- **Codebase size**: ~2,088 Java source files + ~274 Pure language source files (excluding build artifacts)
+
+---
+
+## What Is "Pure"?
+
+Pure is a **functional, statically-typed, platform-independent modeling language**. It is designed for defining data models, transformations, and queries in a technology-agnostic way. The language has its own type system with generics, multiplicity, constraints, and a rich metamodel defined in a self-bootstrapping style (the language defines its own metamodel in `.pure` files).
+
+---
+
+## Module Architecture
+
+The repo uses a layered architecture with these top-level Maven modules:
+
+```mermaid
+graph TD
+    A["legend-pure-core"] --> B["legend-pure-dsl"]
+    A --> C["legend-pure-functions"]
+    A --> D["legend-pure-runtime"]
+    A --> E["legend-pure-store"]
+    A --> F["legend-pure-maven"]
+```
+
+### 1. `legend-pure-core` — Language Foundation
+
+The foundational layer, containing the metamodel and parser infrastructure.
+
+| Sub-module | Purpose |
+|---|---|
+| `legend-pure-m4` | **Base graph layer** – lowest level model/graph primitives (nodes, properties, sources). Uses ANTLR for grammar definitions. |
+| `legend-pure-m3-core` | **Core language** – parser, compiler, type checker, the full M3 metamodel (3,593-line `m3.pure` bootstrap file defining `Class`, `Type`, `GenericType`, `Property`, `Package`, etc.), navigation, incremental compilation, code storage, and the platform function library. |
+| `legend-pure-m3-bootstrap-generator` | Generates bootstrap Java code from the Pure metamodel definitions. |
+| `legend-pure-m3-precisePrimitives` | Extended precise numeric primitive types (e.g., `Decimal`). |
+
+### 2. `legend-pure-dsl` — Domain-Specific Languages
+
+Extensions to the core language for specific modeling concerns:
+
+| Sub-module | Purpose |
+|---|---|
+| `legend-pure-dsl-diagram` | Visual diagram DSL (for model diagrams) |
+| `legend-pure-dsl-graph` | Graph fetch / tree DSL |
+| `legend-pure-dsl-mapping` | Model-to-model mapping DSL |
+| `legend-pure-dsl-path` | Path expression DSL |
+| `legend-pure-dsl-store` | Abstract store DSL |
+| `legend-pure-dsl-tds` | Tabular Data Set (TDS) DSL |
+
+Each DSL sub-module typically contains a `-pure` sub-module (Pure source definitions) and a `-grammar` sub-module (ANTLR parser/grammar).
+
+### 3. `legend-pure-functions` — Standard Library
+
+Pure's built-in function library:
+
+| Sub-module | Purpose |
+|---|---|
+| `legend-pure-functions-base` | Core functions (collection, string, math, date, boolean, meta, IO, etc.) |
+| `legend-pure-functions-json` | JSON serialization/deserialization functions |
+| `legend-pure-functions-relation` | Relational algebra functions (filter, join, project, group, window, etc.) |
+
+### 4. `legend-pure-runtime` — Execution Engines
+
+Two Java-based execution engines for running Pure code:
+
+| Sub-module | Purpose |
+|---|---|
+| `legend-pure-runtime-java-engine-compiled` | **Compiled engine** — transpiles Pure to Java bytecode for high performance. Includes compiled extensions for all DSLs and stores (~526 child entries). |
+| `legend-pure-runtime-java-engine-interpreted` | **Interpreted engine** — tree-walking interpreter for development/debugging (~318 child entries). |
+| `legend-pure-runtime-java-engine-shared` | Shared utilities between both engines. |
+
+### 5. `legend-pure-store` — Store Implementations
+
+| Sub-module | Purpose |
+|---|---|
+| `legend-pure-store-relational` | Relational database store — SQL generation, database schema modeling, and relational mapping execution. Contains Pure definitions, grammar, and compiled/shared extensions. |
+
+### 6. `legend-pure-maven` — Build Plugins
+
+Custom Maven plugins for the build pipeline:
+
+| Sub-module | Purpose |
+|---|---|
+| `legend-pure-maven-generation-java` | Maven plugin to generate Java code from Pure sources |
+| `legend-pure-maven-generation-par` | Maven plugin to generate PAR (Pure Archive) files |
+| `legend-pure-maven-generation-pct` | Maven plugin for PCT (Pure Compatibility Testing) report generation |
+
+---
+
+## Key Technical Highlights
+
+- **Self-bootstrapping metamodel**: The `m3.pure` file (~3,600 lines) defines the entire Pure type system (Class, Property, GenericType, Multiplicity, etc.) using the Pure language's own notation.
+- **ANTLR-based parsing**: Grammars (`M3CoreParser.g4`, `M3CoreLexer.g4`, `M4Fragment.g4`) are used for parsing Pure source code.
+- **Two execution modes**: Code can run either interpreted (for rapid development) or compiled (transpiled to Java for production).
+- **Platform Compatibility Testing (PCT)**: A testing framework to validate that different execution engines produce identical results.
+- **Milestoning support**: Built-in support for temporal (bi-temporal) data modeling.
+- **Relational support**: Full SQL generation capability with H2 and DuckDB driver integrations.
+
+---
+
+## Key Dependencies
+
+| Library | Purpose |
+|---|---|
+| Eclipse Collections | High-performance Java collections |
+| ANTLR 4.8 | Parser/lexer generation |
+| Jackson 2.10 | JSON processing |
+| Guava 30.0 | Core Java utilities |
+| H2 / DuckDB | Embedded database support for testing |
+| SLF4J | Logging |
+| JUnit 4.13 | Testing |
+
+---
+
+## Build & Run
+
+```bash
+# Compile the entire project
+mvn install
+
+# Requires JDK 11 or 17
+```

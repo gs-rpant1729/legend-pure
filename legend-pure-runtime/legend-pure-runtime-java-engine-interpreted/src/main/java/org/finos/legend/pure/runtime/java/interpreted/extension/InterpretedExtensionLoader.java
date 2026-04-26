@@ -25,7 +25,7 @@ public class InterpretedExtensionLoader
     public static MutableList<InterpretedExtension> extensions()
     {
         MutableList<InterpretedExtension> result = Lists.mutable.empty();
-        Iterator<InterpretedExtension> it = ServiceLoader.load(InterpretedExtension.class).iterator();
+        Iterator<InterpretedExtension> it = ServiceLoader.load(InterpretedExtension.class, InterpretedExtension.class.getClassLoader()).iterator();
 
         while (it.hasNext())
         {

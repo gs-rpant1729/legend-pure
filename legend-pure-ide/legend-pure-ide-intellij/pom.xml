@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2024 Goldman Sachs
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <groupId>org.finos.legend.pure</groupId>
+        <artifactId>legend-pure-ide</artifactId>
+        <version>5.56.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>Legend Pure - IDE - IntelliJ Plugin</name>
+    <artifactId>legend-pure-ide-intellij</artifactId>
+    <!--
+      This module is a Gradle project (IntelliJ platform plugin).
+      Maven delegates to the Gradle wrapper for build, test, and packaging.
+      Gradle uses a Java 17 toolchain for compilation; no special JAVA_HOME needed from Maven.
+      The plugin artifact is produced at build/distributions/*.zip by Gradle.
+    -->
+    <packaging>pom</packaging>
+
+    <properties>
+        <javadoc.skip>true</javadoc.skip>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <!-- compile phase: assemble the plugin JAR via Gradle -->
+                    <execution>
+                        <id>gradle-assemble</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${project.basedir}/gradlew</executable>
+                            <workingDirectory>${project.basedir}</workingDirectory>
+                            <arguments>
+                                <argument>assemble</argument>
+                                <argument>--no-daemon</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- test phase: run Gradle tests -->
+                    <execution>
+                        <id>gradle-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${project.basedir}/gradlew</executable>
+                            <workingDirectory>${project.basedir}</workingDirectory>
+                            <arguments>
+                                <argument>test</argument>
+                                <argument>--no-daemon</argument>
+                                <argument>--continue</argument>
+                            </arguments>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+
+                    <!-- package phase: build the distributable plugin zip -->
+                    <execution>
+                        <id>gradle-build-plugin</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${project.basedir}/gradlew</executable>
+                            <workingDirectory>${project.basedir}</workingDirectory>
+                            <arguments>
+                                <argument>buildPlugin</argument>
+                                <argument>--no-daemon</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

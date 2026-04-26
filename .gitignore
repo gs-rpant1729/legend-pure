@@ -12,6 +12,9 @@
 # Build
 **/target
 **/lib
+**/.intellijPlatform
+**/build
+**/.gradle
 **/surefire-reports-aggregate
 **/dependency-reduced-pom.xml
 /.h2Start.sh.swp

@@ -1,0 +1,96 @@
+<idea-plugin>
+    <id>org.finos.legend.pure.ide.intellij</id>
+    <name>Legend Pure Language</name>
+    <vendor email="pure-dev@finos.org" url="https://github.com/finos/legend-pure">FINOS</vendor>
+
+    <description><![CDATA[
+    Provides IDE support for the Pure language used in the Legend platform.
+    Features include syntax highlighting, code completion, go-to definition,
+    find usages, error highlighting, structure view, and debugging support.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Language & File Type -->
+        <fileType name="Pure"
+                  implementationClass="org.finos.legend.pure.ide.intellij.PureFileType"
+                  fieldName="INSTANCE"
+                  language="Pure"
+                  extensions="pure"/>
+
+        <!-- Syntax Highlighting -->
+        <lang.syntaxHighlighterFactory
+                language="Pure"
+                implementationClass="org.finos.legend.pure.ide.intellij.highlight.PureSyntaxHighlighterFactory"/>
+
+        <!-- Parser -->
+        <lang.parserDefinition
+                language="Pure"
+                implementationClass="org.finos.legend.pure.ide.intellij.parser.PureParserDefinition"/>
+
+        <!-- Commenter -->
+        <lang.commenter
+                language="Pure"
+                implementationClass="org.finos.legend.pure.ide.intellij.PureCommenter"/>
+
+        <!-- Brace Matching -->
+        <lang.braceMatcher
+                language="Pure"
+                implementationClass="org.finos.legend.pure.ide.intellij.PureBraceMatcher"/>
+
+        <!-- Structure View -->
+        <lang.psiStructureViewFactory
+                language="Pure"
+                implementationClass="org.finos.legend.pure.ide.intellij.structure.PureStructureViewFactory"/>
+
+        <!-- Code Completion -->
+        <completion.contributor
+                language="Pure"
+                implementationClass="org.finos.legend.pure.ide.intellij.completion.PureCompletionContributor"/>
+
+        <!-- Find Usages -->
+        <lang.findUsagesProvider
+                language="Pure"
+                implementationClass="org.finos.legend.pure.ide.intellij.navigation.PureFindUsagesProvider"/>
+
+        <!-- Reference Contributor -->
+        <psi.referenceContributor
+                language="Pure"
+                implementation="org.finos.legend.pure.ide.intellij.navigation.PureReferenceContributor"/>
+
+        <!-- Error Annotator -->
+        <externalAnnotator
+                language="Pure"
+                implementationClass="org.finos.legend.pure.ide.intellij.annotator.PureExternalAnnotator"/>
+
+        <!-- Project Service for PureRuntime lifecycle -->
+        <projectService
+                serviceImplementation="org.finos.legend.pure.ide.intellij.service.PureProjectService"/>
+
+        <!-- Run Configuration -->
+        <configurationType
+                implementation="org.finos.legend.pure.ide.intellij.run.PureRunConfigurationType"/>
+        <programRunner
+                implementation="org.finos.legend.pure.ide.intellij.debug.PureDebugRunner"/>
+
+        <!-- Debugger -->
+        <xdebugger.breakpointType
+                implementation="org.finos.legend.pure.ide.intellij.debug.PureLineBreakpointType"/>
+
+        <!-- Stub Indexes -->
+        <stubIndex implementation="org.finos.legend.pure.ide.intellij.psi.stubs.PureDefinitionNameIndex"/>
+        <stubIndex implementation="org.finos.legend.pure.ide.intellij.psi.stubs.PureDefinitionQualifiedNameIndex"/>
+
+        <!-- Go-to Symbol -->
+        <gotoSymbolContributor
+                implementation="org.finos.legend.pure.ide.intellij.navigation.PureGoToSymbolContributor"/>
+    </extensions>
+
+    <projectListeners>
+        <listener class="org.finos.legend.pure.ide.intellij.service.PureVfsListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </projectListeners>
+
+</idea-plugin>

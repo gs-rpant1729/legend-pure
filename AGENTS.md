@@ -1,0 +1,1 @@
+This repo contains the implementation for teh core features of a purely functional programming language called Pure. legend-pure-core contains code defining the ANTLR grammar, parser and incremental language graph-based compiler for the core language. 

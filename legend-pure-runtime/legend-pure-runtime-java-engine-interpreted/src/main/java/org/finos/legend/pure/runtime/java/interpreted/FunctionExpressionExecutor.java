@@ -56,16 +56,36 @@ class FunctionExpressionExecutor implements Executor
         return org.finos.legend.pure.m3.navigation.valuespecification.ValueSpecification.isFunctionExpression(instance, processorSupport);
     }
 
-    @Override
-    public CoreInstance execute(CoreInstance instance, Stack<MutableMap<String, CoreInstance>> resolvedTypeParameters, Stack<MutableMap<String, CoreInstance>> resolvedMultiplicityParameters, MutableStack<CoreInstance> functionExpressionCallStack, VariableContext variableContext, Profiler profiler, InstantiationContext instantiationContext, ExecutionSupport executionSupport, FunctionExecutionInterpreted functionExecutionInterpreted, ProcessorSupport processorSupport) throws PureExecutionException
-    {
-        profiler.startExecutingFunctionExpression(instance, functionExpressionCallStack.isEmpty() ? null : functionExpressionCallStack.peek());
-        functionExpressionCallStack.push(instance);
-        try
+        @Override
+        public CoreInstance execute(CoreInstance instance,
+                        Stack<MutableMap<String, CoreInstance>> resolvedTypeParameters,
+                        Stack<MutableMap<String, CoreInstance>> resolvedMultiplicityParameters,
+                        MutableStack<CoreInstance> functionExpressionCallStack, VariableContext variableContext,
+                        Profiler profiler,
+                        InstantiationContext instantiationContext, ExecutionSupport executionSupport,
+                        FunctionExecutionInterpreted functionExecutionInterpreted, ProcessorSupport processorSupport)
+                        throws PureExecutionException
         {
-            FunctionExpression functionExpression = FunctionExpressionCoreInstanceWrapper.toFunctionExpression(instance);
-            ListIterable<? extends ValueSpecification> params = ListHelper.wrapListIterable(functionExpression._parametersValues());
-            Function<?> function = FunctionCoreInstanceWrapper.toFunction(functionExpression._func());
+                profiler.startExecutingFunctionExpression(instance,
+                                functionExpressionCallStack.isEmpty() ? null : functionExpressionCallStack.peek());
+
+                // Debugger hook: notify listener before this FunctionExpression is evaluated
+                PureDebuggerListener listener = functionExecutionInterpreted.getDebuggerListener();
+                org.finos.legend.pure.m4.coreinstance.SourceInformation sourceInfo = instance.getSourceInformation();
+                if (listener != null && sourceInfo != null)
+                {
+                        listener.onBeforeExpressionEvaluation(instance, sourceInfo, variableContext,
+                                        functionExpressionCallStack);
+                }
+
+                functionExpressionCallStack.push(instance);
+                try
+                {
+                        FunctionExpression functionExpression = FunctionExpressionCoreInstanceWrapper
+                                        .toFunctionExpression(instance);
+                        ListIterable<? extends ValueSpecification> params = ListHelper
+                                        .wrapListIterable(functionExpression._parametersValues());
+                        Function<?> function = FunctionCoreInstanceWrapper.toFunction(functionExpression._func());
 
             MutableMap<String, CoreInstance> localResolvedTypeParameters = Maps.mutable.empty();
             MutableMap<String, CoreInstance> localResolvedMultiplicityParameters = Maps.mutable.empty();

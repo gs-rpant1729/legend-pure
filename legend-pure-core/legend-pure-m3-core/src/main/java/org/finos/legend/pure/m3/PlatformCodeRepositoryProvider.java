@@ -43,7 +43,7 @@ public class PlatformCodeRepositoryProvider implements CodeRepositoryProvider
     @Override
     public CodeRepository repository()
     {
-        return GenericCodeRepository.build("platform.json");
+        return GenericCodeRepository.build(PlatformCodeRepositoryProvider.class.getClassLoader(), "platform.json");
     }
 }
 

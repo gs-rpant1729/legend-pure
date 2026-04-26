@@ -243,6 +243,7 @@ public class FunctionExecutionInterpreted implements FunctionExecution
     private final AtomicBoolean cancelExecution = new AtomicBoolean(false);
     private final ExecutionActivityListener executionActivityListener;
     private PureRuntime runtime;
+    private volatile PureDebuggerListener debuggerListener;
 
     private final Console console = new ConsoleInterpreted();
 
@@ -713,6 +714,24 @@ public class FunctionExecutionInterpreted implements FunctionExecution
         this.cancelExecution.set(true);
     }
 
+    /**
+     * Set the debugger listener. Pass null to detach.
+     * When attached, the listener receives callbacks at expression evaluation
+     * and function entry/exit points, enabling breakpoints and stepping.
+     */
+    public void setDebuggerListener(PureDebuggerListener listener)
+    {
+        this.debuggerListener = listener;
+    }
+
+    /**
+     * Returns the currently attached debugger listener, or null if none.
+     */
+    public PureDebuggerListener getDebuggerListener()
+    {
+        return this.debuggerListener;
+    }
+
     public CoreInstance executeFunctionExecuteParams(org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.Function<?> function, ListIterable<? extends CoreInstance> params, Stack<MutableMap<String, CoreInstance>> resolvedTypeParameters, Stack<MutableMap<String, CoreInstance>> resolvedMultiplicityParameters, VariableContext context, MutableStack<CoreInstance> functionExpressionCallStack, Profiler profiler, InstantiationContext instantiationContext, ExecutionSupport executionSupport)
     {
         if (params.notEmpty())
@@ -731,6 +750,15 @@ public class FunctionExecutionInterpreted implements FunctionExecution
 
     public CoreInstance executeFunction(boolean limitScope, org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.Function<?> function, ListIterable<? extends CoreInstance> params, Stack<MutableMap<String, CoreInstance>> resolvedTypeParameters, Stack<MutableMap<String, CoreInstance>> resolvedMultiplicityParameters, VariableContext varContext, MutableStack<CoreInstance> functionExpressionCallStack, Profiler profiler, InstantiationContext instantiationContext, ExecutionSupport executionSupport)
     {
+        // Debugger hook: notify listener on function entry
+        PureDebuggerListener listener = this.debuggerListener;
+        if (listener != null)
+        {
+            org.finos.legend.pure.m4.coreinstance.SourceInformation callSiteInfo = functionExpressionCallStack.isEmpty()
+                    ? null
+                    : functionExpressionCallStack.peek().getSourceInformation();
+            listener.onFunctionEnter(function, params, callSiteInfo);
+        }
         try
         {
             if (this.cancelExecution.compareAndSet(true, false))
@@ -838,6 +866,11 @@ public class FunctionExecutionInterpreted implements FunctionExecution
                     }
                 }
             }
+            // Debugger hook: notify listener on function exit
+            if (listener != null)
+            {
+                listener.onFunctionExit(function, result);
+            }
             return result;
         }
         catch (PureAssertFailException e)
@@ -868,6 +901,11 @@ public class FunctionExecutionInterpreted implements FunctionExecution
         }
         catch (PureException e)
         {
+            // Debugger hook: notify listener on exception
+            if (listener != null && e instanceof PureExecutionException)
+            {
+                listener.onException((PureExecutionException) e);
+            }
             if (!functionExpressionCallStack.isEmpty())
             {
                 org.finos.legend.pure.m4.coreinstance.SourceInformation sourceInfo = functionExpressionCallStack.peek().getSourceInformation();
@@ -1019,8 +1057,28 @@ public class FunctionExecutionInterpreted implements FunctionExecution
     public CoreInstance executeValueSpecification(CoreInstance instance, Stack<MutableMap<String, CoreInstance>> resolvedTypeParameters, Stack<MutableMap<String, CoreInstance>> resolvedMultiplicityParameters, MutableStack<CoreInstance> functionExpressionCallStack, VariableContext variableContext, Profiler profiler, InstantiationContext instantiationContext, ExecutionSupport executionSupport) throws PureExecutionException
     {
         ProcessorSupport processorSupport = this.getProcessorSupport();
-        Executor executor = findValueSpecificationExecutor(instance, functionExpressionCallStack, processorSupport, this);
-        return executor.execute(instance, resolvedTypeParameters, resolvedMultiplicityParameters, functionExpressionCallStack, variableContext, profiler, instantiationContext, executionSupport, this, processorSupport);
+
+        // Debugger hook: notify listener before expression evaluation
+        PureDebuggerListener listener = this.debuggerListener;
+        org.finos.legend.pure.m4.coreinstance.SourceInformation sourceInfo = instance.getSourceInformation();
+        if (listener != null && sourceInfo != null)
+        {
+            listener.onBeforeExpressionEvaluation(instance, sourceInfo, variableContext, functionExpressionCallStack);
+        }
+
+        Executor executor = findValueSpecificationExecutor(instance, functionExpressionCallStack, processorSupport,
+                this);
+        CoreInstance result = executor.execute(instance, resolvedTypeParameters, resolvedMultiplicityParameters,
+                functionExpressionCallStack, variableContext, profiler, instantiationContext, executionSupport, this,
+                processorSupport);
+
+        // Debugger hook: notify listener after expression evaluation
+        if (listener != null && sourceInfo != null)
+        {
+            listener.onAfterExpressionEvaluation(instance, result, sourceInfo);
+        }
+
+        return result;
     }
 
     public static Executor findValueSpecificationExecutor(CoreInstance instance, MutableStack<CoreInstance> functionExpressionCallStack, ProcessorSupport processorSupport, FunctionExecutionInterpreted functionExecutionInterpreted) throws PureExecutionException
